@@ -5,63 +5,72 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+
   const app = await NestFactory.create(AppModule);
 
-  // ─── CORS ────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // CORS
+  // ─────────────────────────────────────────────────────────────
   app.enableCors({
-    origin: process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(',')
-      : ['http://localhost:3001', 'http://localhost:3000'],
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
   });
 
-  // ─── VALIDACIÓN GLOBAL ───────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // VALIDACIÓN GLOBAL
+  // ─────────────────────────────────────────────────────────────
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,           // Elimina campos no declarados en el DTO
-      forbidNonWhitelisted: true, // Lanza error si hay campos extra
-      transform: true,           // Transforma tipos automáticamente
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
       transformOptions: {
         enableImplicitConversion: true,
       },
     }),
   );
 
-  // ─── PREFIJO GLOBAL ─────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // PREFIJO GLOBAL
+  // ─────────────────────────────────────────────────────────────
   app.setGlobalPrefix('api/v1');
 
-  // ─── SWAGGER / DOCUMENTACIÓN ────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // SWAGGER
+  // ─────────────────────────────────────────────────────────────
   const config = new DocumentBuilder()
     .setTitle('🌐 Network Monitor API')
     .setDescription(
       'API REST para el Sistema de Monitoreo de Red Empresarial. ' +
-      'Recibe métricas desde script Python y las sirve al dashboard Next.js.',
+        'Recibe métricas desde scripts de monitoreo y las sirve al dashboard web.',
     )
     .setVersion('1.0')
     .addTag('metrics', 'Gestión de métricas de red')
     .addTag('devices', 'Estado y gestión de dispositivos')
-    .addTag('health', 'Estado de la API')
+    .addTag('health', 'Estado general de la API')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+
   SwaggerModule.setup('docs', app, document, {
     customSiteTitle: 'Network Monitor API Docs',
-    customfavIcon: 'https://nestjs.com/img/logo_text.svg',
     swaggerOptions: {
       persistAuthorization: true,
       docExpansion: 'list',
     },
   });
 
-  // ─── ARRANQUE ────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // ARRANQUE
+  // ─────────────────────────────────────────────────────────────
   const port = process.env.PORT || 3000;
+
   await app.listen(port);
 
   logger.log(`🚀 API corriendo en: http://localhost:${port}/api/v1`);
-  logger.log(`📚 Documentación en: http://localhost:${port}/docs`);
-  logger.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
+  logger.log(`📚 Swagger Docs: http://localhost:${port}/docs`);
+  logger.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 }
 
 bootstrap();
